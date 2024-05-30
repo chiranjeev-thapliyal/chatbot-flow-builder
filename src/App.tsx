@@ -1,48 +1,113 @@
-import { useCallback } from 'react';
-import ReactFlow, {
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  BackgroundVariant,
-} from 'reactflow';
-
+import { useCallback, useMemo, useState } from 'react';
+import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, Panel } from 'reactflow';
 import 'reactflow/dist/style.css';
+import TextNode from './components/TextNode';
+import NodePanel from './components/NodePanel';
+import './App.css'
 
 const initialNodes = [
-  { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
-  { id: '2', position: { x: 0, y: 100 }, data: { label: '2' } },
+  {
+    id: '1',
+    position: { x: 0, y: 0 },
+    data: { label: 'text message 1' },
+    type: 'textNode',
+  },
+  {
+    id: '2',
+    position: { x: 100, y: 100 },
+    data: { label: 'text message 2' },
+    type: 'textNode'
+  },
 ];
 
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+// const initialEdges = [];
+
+const allNodeTypes = [
+  { type: 'textNode', label: 'Message' }
+]
+
+let id = 0;
+const getId = () => `dndnode_${id++}`;
 
 function App() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes] = useState(initialNodes);
+  const [edges, setEdges] = useState(initialEdges);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
+
+  const onNodesChange = useCallback((changes) => setNodes((prevNodes) => applyNodeChanges(changes, prevNodes)), []);
+  const onEdgesChange = useCallback(
+    (changes) => setEdges((prevEdges) => applyEdgeChanges(changes, prevEdges)),
+    [],
   );
 
-  return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-      >
+  const onConnect = useCallback((params) => setEdges((prevEdges) => addEdge(params, prevEdges)), []);
 
-        <Controls />
-        <MiniMap />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-      </ReactFlow>
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+
+      const type = event.dataTransfer.getData('application/reactflow');
+
+      // check if the dropped element is valid
+      if (typeof type === 'undefined' || !type) {
+        return;
+      }
+
+      // reactFlowInstance.project was renamed to reactFlowInstance.screenToFlowPosition
+      // and you don't need to subtract the reactFlowBounds.left/top anymore
+      // details: https://reactflow.dev/whats-new/2023-11-10
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      const newNode = {
+        id: getId(),
+        type,
+        position,
+        data: { label: `${type} node` },
+      };
+
+      setNodes((prevNodes) => prevNodes.concat(newNode));
+    },
+    [reactFlowInstance],
+  );
+
+  const nodeTypes = useMemo(() => ({ textNode: TextNode }), []);
+
+  return (
+    <div className='container'>
+      <div className='navbar'>Navbar</div>
+      <div className='main' style={{ height: "100%" }}>
+        <div className="panel">
+          <NodePanel nodeTypes={allNodeTypes} />
+        </div>
+        <div className="flow">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            fitView
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default App
+export default App;

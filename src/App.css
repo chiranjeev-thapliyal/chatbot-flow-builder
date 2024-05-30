@@ -1,0 +1,25 @@
+.container {
+    height: 100dvh;
+}
+
+.main {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-template-areas: "flow panel";
+}
+
+.navbar {
+    grid-area: navbar;
+    max-height: 200px;
+}
+
+.flow {
+    grid-area: flow;
+    height: 100%;
+}
+
+.panel {
+    grid-area: panel;
+    border-left: 1px solid black;
+    border: 1px solid red;
+}
