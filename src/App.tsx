@@ -35,6 +35,7 @@ function App() {
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((prevNodes) => applyNodeChanges(changes, prevNodes)),
@@ -51,7 +52,7 @@ function App() {
     const sourceEdge = edges.filter((edge) => edge.source == params.source)
 
     if (sourceEdge.length > 0) {
-      alert("This source is already connected to a target")
+      setError("This source is already connected to a target")
       return;
     }
 
@@ -87,7 +88,7 @@ function App() {
         id: getId(),
         type,
         position,
-        data: { label: `${type} node` },
+        data: { label: 'Enter a message' },
       };
 
       setNodes((prevNodes) => prevNodes.concat(newNode));
@@ -113,10 +114,22 @@ function App() {
   const selectedNode = nodes.find(node => node.id === selectedNodeId);
   const nodeTypes = useMemo(() => ({ textNode: TextNode }), []);
 
+  const handleSave = () => {
+    const edgesWithTarget = edges.map(edge => edge.target);
+    const nodesWithoutEdge = nodes.filter(node => !edgesWithTarget.includes(node.id));
+
+    if (nodesWithoutEdge.length > 1) {
+      setError("Cannot save flow");
+    }
+  }
+
   return (
     <div className='container'>
       <div className='navbar'>
-        <button className='navbar-button'>Save Changes</button>
+        {
+          error.trim().length > 0 && <div className='navbar-error'>{error}</div>
+        }
+        <button onClick={handleSave} className='navbar-button'>Save Changes</button>
       </div>
       <div className='main' style={{ height: "100%" }}>
         <div className="panel">

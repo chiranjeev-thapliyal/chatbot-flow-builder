@@ -16,6 +16,15 @@
     justify-content: right;
 }
 
+.navbar-error {
+    background-color: rgba(255, 0, 0, 0.538);
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
 .navbar-button {
     color: var(--primary-color);
     border: 1px solid var(--primary-color);
