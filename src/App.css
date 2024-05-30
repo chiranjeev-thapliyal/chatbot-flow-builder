@@ -17,7 +17,7 @@
 }
 
 .navbar-error {
-    background-color: rgba(255, 0, 0, 0.538);
+    background-color: var(--error-color);
     font-weight: bold;
     padding: 0.5rem 1rem;
     border-radius: 4px;

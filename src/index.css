@@ -1,8 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
     --primary-color: rgb(0, 72, 130);
+    --error-color: rgba(255, 0, 0, 0.538);
     font-family: Arial, Helvetica, sans-serif;
 }

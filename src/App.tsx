@@ -1,118 +1,50 @@
-import { ChangeEvent, DragEvent, useCallback, useMemo, useState } from 'react';
-import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, OnNodesChange, OnEdgesChange, OnConnect, Node, Edge, ReactFlowInstance, NodeChange, NodeMouseHandler } from 'reactflow';
-import 'reactflow/dist/style.css';
-import TextNode from './components/TextNode/TextNode';
-import NodePanel from './components/NodePanel/NodePanel';
-import './App.css'
+import { FunctionComponent, useMemo, useState } from 'react';
+import ReactFlow, { Controls, Background, Node, Edge, ReactFlowInstance, NodeProps } from 'reactflow';
+
+import TextNode from './components/TextNode';
+import NodePanel from './components/NodePanel';
 import SettingsPanel from './components/SettingsPanel';
 
+import 'reactflow/dist/style.css';
+import './App.css'
+
+import useReactFlowNodes from './hooks/useReactFlowNodes';
+import useReactFlowEdges from './hooks/useReactFlowEdges';
+import useNodeSelection from './hooks/useNodeSelection';
+import useDragAndDrop from './hooks/useDragAndDrop';
+
+// Initial Nodes for sample
 const initialNodes: Node[] = [
-  {
-    id: '1',
-    position: { x: 0, y: 0 },
-    data: { label: 'text message 1' },
-    type: 'textNode',
-  },
-  {
-    id: '2',
-    position: { x: 100, y: 100 },
-    data: { label: 'text message 2' },
-    type: 'textNode'
-  },
+  { id: '1', position: { x: 0, y: 0 }, data: { label: 'text message 1' }, type: 'textNode' },
+  { id: '2', position: { x: 100, y: 100 }, data: { label: 'text message 2' }, type: 'textNode' },
 ];
 
+// Initial Edges for sample
 const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2' }];
 
-const allNodeTypes = [
-  { type: 'textNode', label: 'Message' }
+// Extensible Node Types 
+const additionalNodeTypes = [
+  { type: 'textNode', label: 'Message', component: TextNode }
 ]
 
-let id = 0;
-const getId = () => `dndnode_${id++}`;
-
 function App() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const { nodes, setNodes, onNodesChange } = useReactFlowNodes(initialNodes);
+  const { edges, onConnect, onEdgesChange } = useReactFlowEdges(initialEdges, setError);
+  const { selectedNode, handleNodeLabelChange, onNodeClick, handleBackAction } = useNodeSelection(nodes, setNodes);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const { onDrop, onDragOver } = useDragAndDrop(reactFlowInstance, setNodes);
 
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((prevNodes) => applyNodeChanges(changes, prevNodes)),
-    []
-  );
+  // Registering new node types to react-flow (making extensible)
+  const nodeTypes = useMemo(() => {
+    const types: Record<string, FunctionComponent<NodeProps>> = {};
 
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((prevEdges) => applyEdgeChanges(changes, prevEdges)),
-    [],
-  );
+    additionalNodeTypes.forEach(({ type, component }) => {
+      types[type] = component
+    })
 
-  const onConnect: OnConnect = useCallback((params) => {
-    // Check if this source is already connected to a target
-    const sourceEdge = edges.filter((edge) => edge.source == params.source)
-
-    if (sourceEdge.length > 0) {
-      setError("This source is already connected to a target")
-      return;
-    }
-
-    setEdges((prevEdges) => addEdge(params, prevEdges))
-  }, [edges]);
-
-  const onDragOver = useCallback((event: DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    return types;
   }, []);
-
-  const onDrop = useCallback(
-    (event: DragEvent) => {
-      event.preventDefault();
-
-      const type = event.dataTransfer.getData('application/reactflow');
-
-      // check if the dropped element is valid
-      if (typeof type === 'undefined' || !type) {
-        return;
-      }
-
-      if (!reactFlowInstance) {
-        return;
-      }
-
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-
-      const newNode = {
-        id: getId(),
-        type,
-        position,
-        data: { label: 'Enter a message' },
-      };
-
-      setNodes((prevNodes) => prevNodes.concat(newNode));
-    },
-    [reactFlowInstance],
-  );
-
-  const handleNodeLabelChange = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
-    const { value } = event.target;
-    setNodes((prevNodes) =>
-      prevNodes.map((node) =>
-        node.id === selectedNodeId ? { ...node, data: { ...node.data, label: value } } : node
-      )
-    );
-  }, [selectedNodeId]);
-
-  const handleBackAction = useCallback(() => {
-    setSelectedNodeId(null);
-  }, [])
-
-  const onNodeClick: NodeMouseHandler = useCallback((_, node) => setSelectedNodeId(node.id), [])
-
-  const selectedNode = nodes.find(node => node.id === selectedNodeId);
-  const nodeTypes = useMemo(() => ({ textNode: TextNode }), []);
 
   const handleSave = () => {
     const edgesWithTarget = edges.map(edge => edge.target);
@@ -134,7 +66,7 @@ function App() {
       <div className='main' style={{ height: "100%" }}>
         <div className="panel">
           {
-            selectedNode ? <SettingsPanel node={selectedNode} handleNodeLabelChange={handleNodeLabelChange} handleBackAction={handleBackAction} /> : <NodePanel nodeTypes={allNodeTypes} />
+            selectedNode ? <SettingsPanel node={selectedNode} handleNodeLabelChange={handleNodeLabelChange} handleBackAction={handleBackAction} /> : <NodePanel nodeTypes={additionalNodeTypes} />
           }
         </div>
         <div className="flow">
