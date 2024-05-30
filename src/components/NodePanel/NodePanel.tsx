@@ -1,3 +1,5 @@
+import './NodePanel.css'
+
 interface NodePanelProps {
     nodeTypes: { type: string, label: string }[];
 }
@@ -8,14 +10,17 @@ const NodePanel = ({ nodeTypes }: NodePanelProps) => {
         event.dataTransfer.effectAllowed = 'move';
     };
 
-    return <aside>
+    return <aside className='panel-wrapper'>
         {
             nodeTypes.map((node) => (
-                <div className="dndnode input"
+                <div
+                    className={`dndnode ${node.type}`}
                     key={node.label}
                     onDragStart={(event) => onDragStart(event, node.type)}
-                    draggable>
-                    {node.label}
+                    draggable
+                >
+                    <i className='dndnode-icon bi bi-chat-text' />
+                    <span className='dndnode-label'>{node.label}</span>
                 </div>
             ))
         }

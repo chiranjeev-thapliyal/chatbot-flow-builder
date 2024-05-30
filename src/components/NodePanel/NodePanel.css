@@ -1,0 +1,20 @@
+.dndnode {
+    width: fit-content;
+    padding: 1rem 3rem;
+    border-radius: 8px;
+    border: 1px solid var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dndnode > .dndnode-icon {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+}
+
+.dndnode > .dndnode-label {
+    color: var(--primary-color);
+}

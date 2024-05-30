@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, Panel } from 'reactflow';
 import 'reactflow/dist/style.css';
 import TextNode from './components/TextNode';
-import NodePanel from './components/NodePanel';
+import NodePanel from './components/NodePanel/NodePanel';
 import './App.css'
 
 const initialNodes = [
@@ -83,7 +83,9 @@ function App() {
 
   return (
     <div className='container'>
-      <div className='navbar'>Navbar</div>
+      <div className='navbar'>
+        <button className='navbar-button'>Save Changes</button>
+      </div>
       <div className='main' style={{ height: "100%" }}>
         <div className="panel">
           <NodePanel nodeTypes={allNodeTypes} />
