@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, Panel } from 'reactflow';
+import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import 'reactflow/dist/style.css';
-import TextNode from './components/TextNode';
+import TextNode from './components/TextNode/TextNode';
 import NodePanel from './components/NodePanel/NodePanel';
 import './App.css'
 
