@@ -1,7 +1,7 @@
-import { Handle, Position } from "reactflow"
+import { Handle, NodeProps, Position } from "reactflow"
 import './TextNode.css'
 
-function TextNode() {
+function TextNode({ data }: NodeProps) {
     return <div className="text-node-wrapper">
         <Handle type="target" position={Position.Left} />
         <Handle type="source" position={Position.Right} />
@@ -13,7 +13,7 @@ function TextNode() {
             <img src="icons/whatsapp.png" />
         </div>
         <div className="message-card">
-            <span>text message 1</span>
+            <span>{data.label}</span>
         </div>
     </div>
 }

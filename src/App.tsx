@@ -1,9 +1,10 @@
-import { DragEvent, useCallback, useMemo, useState } from 'react';
-import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, OnNodesChange, OnEdgesChange, OnConnect, Node, Edge, ReactFlowInstance } from 'reactflow';
+import { ChangeEvent, DragEvent, useCallback, useMemo, useState } from 'react';
+import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, OnNodesChange, OnEdgesChange, OnConnect, Node, Edge, ReactFlowInstance, NodeChange, NodeMouseHandler } from 'reactflow';
 import 'reactflow/dist/style.css';
 import TextNode from './components/TextNode/TextNode';
 import NodePanel from './components/NodePanel/NodePanel';
 import './App.css'
+import SettingsPanel from './components/SettingsPanel';
 
 const initialNodes: Node[] = [
   {
@@ -33,8 +34,13 @@ function App() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  const onNodesChange: OnNodesChange = useCallback((changes) => setNodes((prevNodes) => applyNodeChanges(changes, prevNodes)), []);
+  const onNodesChange: OnNodesChange = useCallback(
+    (changes: NodeChange[]) => setNodes((prevNodes) => applyNodeChanges(changes, prevNodes)),
+    []
+  );
+
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => setEdges((prevEdges) => applyEdgeChanges(changes, prevEdges)),
     [],
@@ -89,6 +95,22 @@ function App() {
     [reactFlowInstance],
   );
 
+  const handleNodeLabelChange = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
+    const { value } = event.target;
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
+        node.id === selectedNodeId ? { ...node, data: { ...node.data, label: value } } : node
+      )
+    );
+  }, [selectedNodeId]);
+
+  const handleBackAction = useCallback(() => {
+    setSelectedNodeId(null);
+  }, [])
+
+  const onNodeClick: NodeMouseHandler = useCallback((_, node) => setSelectedNodeId(node.id), [])
+
+  const selectedNode = nodes.find(node => node.id === selectedNodeId);
   const nodeTypes = useMemo(() => ({ textNode: TextNode }), []);
 
   return (
@@ -98,13 +120,16 @@ function App() {
       </div>
       <div className='main' style={{ height: "100%" }}>
         <div className="panel">
-          <NodePanel nodeTypes={allNodeTypes} />
+          {
+            selectedNode ? <SettingsPanel node={selectedNode} handleNodeLabelChange={handleNodeLabelChange} handleBackAction={handleBackAction} /> : <NodePanel nodeTypes={allNodeTypes} />
+          }
         </div>
         <div className="flow">
           <ReactFlow
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
+            onNodeClick={onNodeClick}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
