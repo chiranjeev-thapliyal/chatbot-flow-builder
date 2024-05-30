@@ -1,11 +1,9 @@
+import { DragEvent } from 'react';
 import './NodePanel.css'
-
-interface NodePanelProps {
-    nodeTypes: { type: string, label: string }[];
-}
+import NodePanelProps from './NodePanel.types';
 
 const NodePanel = ({ nodeTypes }: NodePanelProps) => {
-    const onDragStart = (event, nodeType) => {
+    const onDragStart = (event: DragEvent, nodeType: string) => {
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
     };

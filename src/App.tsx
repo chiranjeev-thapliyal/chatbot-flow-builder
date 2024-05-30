@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
-import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
+import { DragEvent, useCallback, useMemo, useState } from 'react';
+import ReactFlow, { Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, OnNodesChange, OnEdgesChange, OnConnect, Node, Edge, ReactFlowInstance } from 'reactflow';
 import 'reactflow/dist/style.css';
 import TextNode from './components/TextNode/TextNode';
 import NodePanel from './components/NodePanel/NodePanel';
 import './App.css'
 
-const initialNodes = [
+const initialNodes: Node[] = [
   {
     id: '1',
     position: { x: 0, y: 0 },
@@ -20,8 +20,7 @@ const initialNodes = [
   },
 ];
 
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
-// const initialEdges = [];
+const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2' }];
 
 const allNodeTypes = [
   { type: 'textNode', label: 'Message' }
@@ -31,26 +30,35 @@ let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 function App() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [nodes, setNodes] = useState<Node[]>(initialNodes);
+  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
-
-  const onNodesChange = useCallback((changes) => setNodes((prevNodes) => applyNodeChanges(changes, prevNodes)), []);
-  const onEdgesChange = useCallback(
+  const onNodesChange: OnNodesChange = useCallback((changes) => setNodes((prevNodes) => applyNodeChanges(changes, prevNodes)), []);
+  const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => setEdges((prevEdges) => applyEdgeChanges(changes, prevEdges)),
     [],
   );
 
-  const onConnect = useCallback((params) => setEdges((prevEdges) => addEdge(params, prevEdges)), []);
+  const onConnect: OnConnect = useCallback((params) => {
+    // Check if this source is already connected to a target
+    const sourceEdge = edges.filter((edge) => edge.source == params.source)
 
-  const onDragOver = useCallback((event) => {
+    if (sourceEdge.length > 0) {
+      alert("This source is already connected to a target")
+      return;
+    }
+
+    setEdges((prevEdges) => addEdge(params, prevEdges))
+  }, [edges]);
+
+  const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
   const onDrop = useCallback(
-    (event) => {
+    (event: DragEvent) => {
       event.preventDefault();
 
       const type = event.dataTransfer.getData('application/reactflow');
@@ -60,13 +68,15 @@ function App() {
         return;
       }
 
-      // reactFlowInstance.project was renamed to reactFlowInstance.screenToFlowPosition
-      // and you don't need to subtract the reactFlowBounds.left/top anymore
-      // details: https://reactflow.dev/whats-new/2023-11-10
+      if (!reactFlowInstance) {
+        return;
+      }
+
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
+
       const newNode = {
         id: getId(),
         type,
